@@ -384,6 +384,20 @@ function bodyArt(k,s){
   const a=BODY_ART[k],[w,x1,y1,x2,y2]=a.arm,[lw,lx1,ly1,lx2,ly2]=a.leg,m=x=>100-x;
   return `<span class="bodyart ${a.g}" style="width:${s}px;height:${s}px"><svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><g fill="#fff" stroke="#fff" stroke-linecap="round"><circle cx="${a.head[0]}" cy="${a.head[1]}" r="${a.head[2]}" stroke="none"/><path d="${a.torso}" stroke="none"/><path d="M${x1} ${y1}L${x2} ${y2}M${m(x1)} ${y1}L${m(x2)} ${y2}" stroke-width="${w}" fill="none"/><path d="M${lx1} ${ly1}L${lx2} ${ly2}M${m(lx1)} ${ly1}L${m(lx2)} ${ly2}" stroke-width="${lw}" fill="none"/></g></svg></span>`;
 }
+const MUSCLE_ART={
+  chest:'<path d="M35 30Q50 26 65 30C66 38 60 42 50 42C40 42 34 38 35 30Z"/>',
+  back:'<path d="M33 28H67C66 39 61 49 59 58H41C39 49 34 39 33 28Z"/>',
+  shoulders:'<circle cx="30" cy="31" r="7.5"/><circle cx="70" cy="31" r="7.5"/>',
+  biceps:'<path d="M29 35L26 47M71 35L74 47" stroke="#fff" stroke-width="9" stroke-linecap="round" fill="none"/>',
+  triceps:'<path d="M27 34L24 46M73 34L76 46" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"/>',
+  legs:'<path d="M44.5 60L43 92M55.5 60L57 92" stroke="#fff" stroke-width="10" stroke-linecap="round" fill="none"/>',
+  glutes:'<circle cx="43.5" cy="60" r="7.5"/><circle cx="56.5" cy="60" r="7.5"/>',
+  abs:'<rect x="42.5" y="39" width="15" height="19" rx="4"/>',
+  cardio:'<path d="M50 50C40 43 37 38 37 33.5C37 29.5 40 27 43.5 27C46.5 27 48.8 28.8 50 31.5C51.2 28.8 53.5 27 56.5 27C60 27 63 29.5 63 33.5C63 38 60 43 50 50Z"/>'
+};
+function muscleArt(k,s){
+  return `<svg viewBox="0 0 100 100" width="${s}" height="${s}" aria-hidden="true" style="display:block"><g fill="#fff" stroke="#fff" stroke-linecap="round" opacity=".5"><circle cx="50" cy="15" r="8" stroke="none"/><path d="M31 27Q50 23 69 27C68 39 62 49 60 59H40C38 49 32 39 31 27Z" stroke="none"/><path d="M30 31L23 60M70 31L77 60" stroke-width="8" fill="none"/><path d="M44.5 60L43 92M55.5 60L57 92" stroke-width="10" fill="none"/></g><g fill="#fff">${MUSCLE_ART[k]}</g></svg>`;
+}
 const LEVELS={1:{n:'Новичок',d:'До 6 месяцев тренировок'},2:{n:'Средний',d:'0,5–2 года регулярно'},3:{n:'Продвинутый',d:'Больше 2 лет'}};
 const TIPS=['Пейте 30–35 мл воды на килограмм веса в день.','Белок в каждом приёме пищи ускоряет восстановление.','Прогрессия нагрузки — главный двигатель роста мышц.','8–10 тысяч шагов в день сжигают до 400 ккал.','Сон меньше 6 часов снижает тестостерон и мешает похудению.','Разминайтесь 5–10 минут перед каждой тренировкой.','Фотографируйте себя раз в 2 недели — весы не всё показывают.','Отдых — часть программы: мышцы растут между тренировками.'];
 
@@ -594,7 +608,7 @@ function macro(n,g,c,f){return `<div class="macro"><div class="small sec" style=
 function exRow(e,it){
   const m=MUS[e.m];
   const val=it?(it.time?`${it.sets>1?it.sets+' × ':''}${fmtT(it.time)}`:`${it.sets} × ${it.reps}`):LOC[e.l[0]].n;
-  return `<button class="li" data-ex="${e.id}"><div class="ic" style="background:${m.c}">${m.e}</div><div class="body"><div class="t">${esc(e.n)}</div><div class="s">${m.n} · ${esc(e.eq)}</div></div><div class="v small">${val}</div>${I.chev}</button>`;
+  return `<button class="li" data-ex="${e.id}"><div class="ic" style="background:${m.c}">${muscleArt(e.m,28)}</div><div class="body"><div class="t">${esc(e.n)}</div><div class="s">${m.n} · ${esc(e.eq)}</div></div><div class="v small">${val}</div>${I.chev}</button>`;
 }
 function fmtT(s){if(s<60)return s+' с';const m=Math.floor(s/60),r=s%60;return r?`${m}:${String(r).padStart(2,'0')}`:m+' мин'}
 
@@ -638,11 +652,11 @@ function libResults(){
   const base=EX.filter(e=>L.loc==='all'||e.l.includes(L.loc));
   if(q||L.m){
     const r=base.filter(e=>(!L.m||e.m===L.m)&&(!q||e.n.toLowerCase().includes(q)||MUS[e.m].n.toLowerCase().includes(q)));
-    return `${L.m?`<div class="row between" style="margin:14px 4px 10px"><h2 style="margin:0">${MUS[L.m].e} ${MUS[L.m].n}</h2><button class="link" data-lm="">Все группы</button></div>`:'<div style="height:8px"></div>'}
+    return `${L.m?`<div class="row between" style="margin:14px 4px 10px"><h2 style="margin:0;display:flex;align-items:center;gap:10px"><span class="bodyart" style="width:32px;height:32px;background:${MUS[L.m].c}">${muscleArt(L.m,32)}</span>${MUS[L.m].n}</h2><button class="link" data-lm="">Все группы</button></div>`:'<div style="height:8px"></div>'}
     ${r.length?`<div class="list">${r.map(e=>exRow(e)).join('')}</div>`:'<div class="empty">Ничего не найдено</div>'}`;
   }
   return `<h2>Группы мышц</h2><div class="grid2">${Object.entries(MUS).map(([k,m])=>{const n=base.filter(e=>e.m===k).length;
-    return `<button class="tile" data-lm="${k}"><div class="ico" style="background:${m.c}22">${m.e}</div><div><div class="t">${m.n}</div><div class="s">${n} упр.</div></div></button>`}).join('')}</div>
+    return `<button class="tile" data-lm="${k}"><div class="ico" style="background:${m.c}">${muscleArt(k,40)}</div><div><div class="t">${m.n}</div><div class="s">${n} упр.</div></div></button>`}).join('')}</div>
   <h2>Где тренироваться</h2>
   <div class="list">${Object.entries(LOC).map(([k,l])=>`<button class="li" data-lloc="${k}"><div class="ic ${l.g}">${l.e}</div><div class="body"><div class="t">${l.n}</div><div class="s">${l.d}</div></div><div class="v small">${EX.filter(e=>e.l.includes(k)).length}</div>${I.chev}</button>`).join('')}</div>`;
 }
@@ -749,7 +763,7 @@ function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');c
 function sheetExercise(id){
   const e=EXM[id],m=MUS[e.m],it=mkItem(e,S.p);
   openSheet('',`
-  <div class="exhero" style="background:linear-gradient(140deg,${m.c},${m.c}99)">${m.e}</div>
+  <div class="exhero" style="background:linear-gradient(140deg,${m.c},${m.c}99)">${muscleArt(e.m,150)}</div>
   <h1 style="font-size:28px;line-height:1.15">${esc(e.n)}</h1>
   <div class="foot sec" style="margin:4px 0 12px">${m.n} · сложность <span class="dots">${[1,2,3].map(i=>`<i class="${i<=e.lv?'on':''}"></i>`).join('')}</span></div>
   <div>${e.l.map(l=>`<span class="tag">${LOC[l].e} ${LOC[l].n}</span>`).join('')}<span class="tag">🧰 ${esc(e.eq)}</span></div>
@@ -846,7 +860,7 @@ function renderPlayer(){
     const isT=!!it.time;
     main=`<div class="k">Упражнение ${P.i+1} из ${tot}${it.sets>1?' · подход '+P.set+' из '+it.sets:''}</div>
     <div class="nm">${esc(e.n)}</div>
-    ${isT?pring('#A6FF00'):`<div class="pemoji" style="background:${m.c}">${m.e}</div><div class="huge">${esc(it.reps)}</div><div class="k" style="text-transform:none">повторений</div>`}
+    ${isT?pring('#A6FF00'):`<div class="pemoji" style="background:${m.c}">${muscleArt(e.m,96)}</div><div class="huge">${esc(it.reps)}</div><div class="k" style="text-transform:none">повторений</div>`}
     <div class="ptip" style="margin-top:8px">${esc(e.steps[0])}. ${esc(e.tip)}</div>`;
     ctrl=isT?`<button class="btn pbtn2" data-p="skip">Пропустить</button><button class="btn pgo" data-p="toggle">${P.running?'Пауза':'Старт'}</button>`
             :`<button class="btn pbtn2" data-p="skip">Пропустить</button><button class="btn pgo" data-p="doneSet">Готово ✓</button>`;
