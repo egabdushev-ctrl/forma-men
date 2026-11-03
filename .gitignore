@@ -1,0 +1,6 @@
+# Секреты и локальные документы — не публиковать
+Token GITHUB.txt
+*.token
+.env
+prd.md
+.claude/
