@@ -200,6 +200,7 @@ h3{font-size:17px;font-weight:600}
 .feat .e{font-size:28px;width:40px;flex:none;text-align:center}
 .spacer{flex:1}
 .empty{text-align:center;padding:30px 16px;color:var(--sec)}
+.bodyart{display:inline-block;flex:none;border-radius:24%;overflow:hidden;vertical-align:top}
 .fade{animation:fade .35s ease}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .toast{position:fixed;left:50%;top:calc(var(--st) + 12px);transform:translate(-50%,-150%);background:var(--bar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:12px 18px;border-radius:100px;font-size:15px;font-weight:600;z-index:80;transition:transform .35s cubic-bezier(.32,.72,0,1);box-shadow:0 6px 24px rgba(0,0,0,.15)}
@@ -367,13 +368,22 @@ const AGES=[
   {k:'60+',n:'60 лет и старше',e:'🌿',d:'Сила, баланс и подвижность для качества жизни.',tips:['Без прыжков и ударных нагрузок — приложение уберёт их само','Упражнения на баланс и устойчивость','2–3 силовые тренировки в неделю с весом тела','Обязательно согласуйте программу с врачом']}
 ];
 const BODY={
-  ecto:{n:'Эктоморф',e:'🦒',d:'Худощавый, узкие плечи и кости, быстрый обмен веществ, трудно набрать вес.',
+  ecto:{n:'Эктоморф',d:'Худощавый, узкие плечи и кости, быстрый обмен веществ, трудно набрать вес.',
     tips:['Профицит калорий 15–20%, 5–6 приёмов пищи','Базовые многосуставные упражнения, 6–10 повторов','Кардио — минимум, 1–2 раза по 20 минут','Длинный отдых между подходами: 90–120 с']},
-  meso:{n:'Мезоморф',e:'🦁',d:'Атлетичное сложение от природы, широкие плечи, легко набирает мышцы и сбрасывает жир.',
+  meso:{n:'Мезоморф',d:'Атлетичное сложение от природы, широкие плечи, легко набирает мышцы и сбрасывает жир.',
     tips:['Сбалансированное питание, лёгкий профицит или дефицит по цели','Хорошо отвечает на разнообразие и периодизацию','Кардио 2–3 раза в неделю','Не перегружайте объём — прогресс и так быстрый']},
-  endo:{n:'Эндоморф',e:'🐻',d:'Крупное, широкое сложение, сильный, но легко накапливает жир.',
+  endo:{n:'Эндоморф',d:'Крупное, широкое сложение, сильный, но легко накапливает жир.',
     tips:['Дефицит 20–25% при похудении, контроль углеводов','Круговые тренировки и суперсеты, короткий отдых','Кардио 3–5 раз в неделю + 8–10 тыс. шагов','Высокий белок — 2–2,2 г на кг веса']}
 };
+const BODY_ART={
+  ecto:{g:'g-teal',head:[50,17,7.5],torso:'M39 28Q50 25 61 28L58 60H42Z',arm:[5,38.5,31,33,60],leg:[7.5,45.5,60,44.5,91]},
+  meso:{g:'g-blue',head:[50,17,8],torso:'M31 28Q50 24 69 28C68 40 62 50 60 60H40C38 50 32 40 31 28Z',arm:[8.5,30,32,23,60],leg:[10,44.5,60,43,91]},
+  endo:{g:'g-orange',head:[50,17,9],torso:'M35 29Q50 25 65 29C74 40 74 54 66 63H34C26 54 26 40 35 29Z',arm:[9,32,33,20,59],leg:[12,43,63,42,91]}
+};
+function bodyArt(k,s){
+  const a=BODY_ART[k],[w,x1,y1,x2,y2]=a.arm,[lw,lx1,ly1,lx2,ly2]=a.leg,m=x=>100-x;
+  return `<span class="bodyart ${a.g}" style="width:${s}px;height:${s}px"><svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><g fill="#fff" stroke="#fff" stroke-linecap="round"><circle cx="${a.head[0]}" cy="${a.head[1]}" r="${a.head[2]}" stroke="none"/><path d="${a.torso}" stroke="none"/><path d="M${x1} ${y1}L${x2} ${y2}M${m(x1)} ${y1}L${m(x2)} ${y2}" stroke-width="${w}" fill="none"/><path d="M${lx1} ${ly1}L${lx2} ${ly2}M${m(lx1)} ${ly1}L${m(lx2)} ${ly2}" stroke-width="${lw}" fill="none"/></g></svg></span>`;
+}
 const LEVELS={1:{n:'Новичок',d:'До 6 месяцев тренировок'},2:{n:'Средний',d:'0,5–2 года регулярно'},3:{n:'Продвинутый',d:'Больше 2 лет'}};
 const TIPS=['Пейте 30–35 мл воды на килограмм веса в день.','Белок в каждом приёме пищи ускоряет восстановление.','Прогрессия нагрузки — главный двигатель роста мышц.','8–10 тысяч шагов в день сжигают до 400 ккал.','Сон меньше 6 часов снижает тестостерон и мешает похудению.','Разминайтесь 5–10 минут перед каждой тренировкой.','Фотографируйте себя раз в 2 недели — весы не всё показывают.','Отдых — часть программы: мышцы растут между тренировками.'];
 
@@ -612,7 +622,7 @@ function vPlan(){
   <h2>По возрасту</h2>
   <div class="grid2">${AGES.map((a,i)=>`<button class="tile" data-sheet="age:${i}" ${ageGroup(p.age)===i?'style="outline:2px solid var(--blue)"':''}><div class="ico" style="background:var(--fill)">${a.e}</div><div><div class="t">${a.n}</div><div class="s">${a.d}</div></div></button>`).join('')}</div>
   <h2>По телосложению</h2>
-  <div class="list">${Object.entries(BODY).map(([k,b])=>`<button class="li" data-sheet="body:${k}"><div class="ic" style="background:var(--fill)">${b.e}</div><div class="body"><div class="t">${b.n}${k===p.body?' <span class="small" style="color:var(--green)">● вы</span>':''}</div><div class="s">${b.d}</div></div>${I.chev}</button>`).join('')}</div>`;
+  <div class="list">${Object.entries(BODY).map(([k,b])=>`<button class="li" data-sheet="body:${k}">${bodyArt(k,30)}<div class="body"><div class="t">${b.n}${k===p.body?' <span class="small" style="color:var(--green)">● вы</span>':''}</div><div class="s">${b.d}</div></div>${I.chev}</button>`).join('')}</div>`;
 }
 
 /* ============ VIEW: LIBRARY ============ */
@@ -772,7 +782,7 @@ function sheetInfo(kind,key){
     <div style="font-size:56px;text-align:center">${a.e}</div><h1 style="text-align:center">${a.n}</h1><p class="foot sec" style="text-align:center;margin:4px 0 14px">${a.d}</p>
     <div class="list plain">${a.tips.map(h=>`<div class="li"><div class="body foot">✓ ${h}</div></div>`).join('')}</div>`)}
   if(kind==='body'){const b=BODY[key];openSheet('Телосложение',`
-    <div style="font-size:56px;text-align:center">${b.e}</div><h1 style="text-align:center">${b.n}</h1><p class="foot sec" style="text-align:center;margin:4px 0 14px">${b.d}</p>
+    <div style="text-align:center">${bodyArt(key,112)}</div><h1 style="text-align:center;margin-top:10px">${b.n}</h1><p class="foot sec" style="text-align:center;margin:4px 0 14px">${b.d}</p>
     <div class="list plain">${b.tips.map(h=>`<div class="li"><div class="body foot">✓ ${h}</div></div>`).join('')}</div>
     ${S.p.body!==key?`<button class="btn gray" style="margin-top:12px" data-setbody="${key}">Это я</button>`:''}`)}
 }
@@ -922,7 +932,7 @@ function renderOnb(){
     <div class="feat"><div class="e">🧬</div><div><h3>Учитывает вас</h3><div class="foot sec">Возраст, телосложение и уровень подготовки</div></div></div></div></div>`;
   if(st==='goal')h=`<h1>Какая у вас цель?</h1><p class="foot sec" style="margin:6px 0 20px">От неё зависят калории, повторы и кардио.</p>`+Object.entries(GOALS).map(([k,g])=>opt('goal',k,g.e,g.n,g.d)).join('');
   if(st==='form')h=`<h1>К какой форме идём?</h1><p class="foot sec" style="margin:6px 0 20px">Можно сменить в любой момент.</p>`+Object.entries(FORMS).map(([k,f])=>opt('form',k,f.e,f.n,f.bf+' · '+f.time)).join('');
-  if(st==='body')h=`<h1>Ваше телосложение</h1><p class="foot sec" style="margin:6px 0 20px">Выберите самое похожее описание.</p>`+Object.entries(BODY).map(([k,b])=>opt('body',k,b.e,b.n,b.d)).join('');
+  if(st==='body')h=`<h1>Ваше телосложение</h1><p class="foot sec" style="margin:6px 0 20px">Выберите самое похожее описание.</p>`+Object.entries(BODY).map(([k,b])=>opt('body',k,bodyArt(k,44),b.n,b.d)).join('');
   if(st==='about')h=`<h1>О вас</h1><p class="foot sec" style="margin:6px 0 20px">Для расчёта питания и нагрузки.</p>
     <div class="stepper"><div style="flex:1"><div class="small sec" style="font-weight:600">ИМЯ</div><input id="oname" value="${esc(p.name)}" placeholder="Как вас зовут?" style="font-size:20px;font-weight:600;background:none;border:0;outline:none;width:100%;margin-top:2px"></div></div>
     ${stepper('age','ВОЗРАСТ','лет',1)}${stepper('h','РОСТ','см',1)}${stepper('w','ТЕКУЩИЙ ВЕС','кг',1)}${stepper('tw','ЖЕЛАЕМЫЙ ВЕС','кг',1)}
