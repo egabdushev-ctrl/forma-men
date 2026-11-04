@@ -201,6 +201,16 @@ h3{font-size:17px;font-weight:600}
 .spacer{flex:1}
 .empty{text-align:center;padding:30px 16px;color:var(--sec)}
 .bodyart{display:inline-block;flex:none;border-radius:24%;overflow:hidden;vertical-align:top}
+.phth{flex:none;width:150px;height:200px;border-radius:16px;overflow:hidden;position:relative;background:var(--fill);scroll-snap-align:start}
+.phth img{width:100%;height:100%;object-fit:cover;display:block}
+.phth span{position:absolute;left:8px;bottom:8px;padding:3px 9px;border-radius:100px;background:rgba(0,0,0,.6);color:#fff;font-size:13px;font-weight:600}
+.lb{position:fixed;inset:0;z-index:65;background:#000;color:#fff;display:none;flex-direction:column;padding:calc(var(--st) + 10px) 12px calc(var(--sb) + 14px)}
+.lb.on{display:flex}
+.lb .top{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:15px;font-weight:600}
+.lb .pic{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;margin:10px 0}
+.lb .pic img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
+.lb .nav{display:flex;gap:12px;max-width:420px;width:100%;margin:0 auto}
+.lb .xbtn{background:rgba(255,255,255,.14);color:#fff;width:44px;height:44px;flex:none}
 .fade{animation:fade .35s ease}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .toast{position:fixed;left:50%;top:calc(var(--st) + 12px);transform:translate(-50%,-150%);background:var(--bar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:12px 18px;border-radius:100px;font-size:15px;font-weight:600;z-index:80;transition:transform .35s cubic-bezier(.32,.72,0,1);box-shadow:0 6px 24px rgba(0,0,0,.15)}
@@ -246,6 +256,7 @@ textarea.field{min-height:110px;resize:vertical;font-family:inherit;line-height:
 <div class="player" id="player"></div>
 <div class="alert" id="alert"></div>
 <div class="toast" id="toast"></div>
+<div class="lb" id="lb"></div>
 <div id="onbHost"></div>
 
 <script src="config.js"></script>
@@ -764,6 +775,7 @@ function sheetExercise(id){
   const e=EXM[id],m=MUS[e.m],it=mkItem(e,S.p);
   openSheet('',`
   <div class="exhero" style="background:linear-gradient(140deg,${m.c},${m.c}99)">${muscleArt(e.m,150)}</div>
+  <div id="exPhotos" data-id="${e.id}"></div>
   <h1 style="font-size:28px;line-height:1.15">${esc(e.n)}</h1>
   <div class="foot sec" style="margin:4px 0 12px">${m.n} · сложность <span class="dots">${[1,2,3].map(i=>`<i class="${i<=e.lv?'on':''}"></i>`).join('')}</span></div>
   <div>${e.l.map(l=>`<span class="tag">${LOC[l].e} ${LOC[l].n}</span>`).join('')}<span class="tag">🧰 ${esc(e.eq)}</span></div>
@@ -773,6 +785,7 @@ function sheetExercise(id){
   <div class="card row" style="background:${m.c}1f"><div style="font-size:24px">💡</div><div class="foot">${esc(e.tip)}</div></div>
   ${allowed(e,S.p)?'':`<div class="card foot" style="color:var(--orange)">⚠️ Для вашего возраста и уровня это упражнение не входит в автоматический план. Выполняйте осторожно.</div>`}
   <button class="btn" style="margin-top:8px" data-single="${e.id}">${I.play} Выполнить сейчас</button>`);
+  loadExPhotos(id);
 }
 function sheetWorkout(w){
   S._preview=w;const min=estMin(w);
@@ -826,6 +839,36 @@ function sheetInstall(){
   ${S._bip?'<button class="btn" style="margin-top:12px" data-act="bip">Установить сейчас</button>':''}
   <p class="note" style="margin-top:12px">После установки приложение открывается на весь экран и работает без интернета.</p>`);
 }
+
+/* ============ ФОТО УПРАЖНЕНИЙ ============ */
+// Файлы лежат в photos/<id упражнения>/; список кадров и требования — в PHOTOS.md
+const PHOTO_VIEWS=[['front','Спереди'],['side','Сбоку'],['back','Сзади'],['angle','Под углом']];
+const PHOTO_CACHE={};
+function exPhotos(id){
+  return PHOTO_CACHE[id]=PHOTO_CACHE[id]||Promise.all(PHOTO_VIEWS.map(([f,n])=>new Promise(ok=>{const i=new Image(),src=`photos/${id}/${f}.jpg`;i.onload=()=>ok({src,n});i.onerror=()=>ok(null);i.src=src}))).then(a=>a.filter(Boolean));
+}
+function loadExPhotos(id){
+  const nm=esc(EXM[id].n);
+  exPhotos(id).then(list=>{
+    const box=$('#exPhotos');if(!box||box.dataset.id!==id)return;
+    if(!list.length){box.innerHTML='<p class="note">📷 Фото техники с разных ракурсов скоро появятся.</p>';return}
+    const hero=$('#sheet .exhero');if(hero)hero.remove();
+    box.innerHTML=`<div class="hscroll" style="margin-bottom:14px">${list.map((p,i)=>`<button class="phth" data-ph="${id}:${i}"><img src="${p.src}" alt="${nm} — ${p.n}" loading="lazy"><span>${p.n}</span></button>`).join('')}</div>`;
+  });
+}
+const LB={id:null,list:[],i:0};
+function openLb(id,i){exPhotos(id).then(list=>{if(!list[i])return;LB.id=id;LB.list=list;LB.i=i;renderLb();$('#lb').classList.add('on')})}
+function closeLb(){LB.id=null;$('#lb').classList.remove('on');$('#lb').innerHTML=''}
+function stepLb(d){if(!LB.id||LB.list.length<2)return;LB.i=(LB.i+d+LB.list.length)%LB.list.length;renderLb()}
+function renderLb(){
+  const p=LB.list[LB.i],nm=esc(EXM[LB.id].n),many=LB.list.length>1;
+  $('#lb').innerHTML=`<div class="top"><div>${nm}<div class="small" style="opacity:.7;font-weight:400">${p.n} · ${LB.i+1} из ${LB.list.length}</div></div><button class="xbtn" data-lb="close" aria-label="Закрыть">✕</button></div>
+  <div class="pic"><img src="${p.src}" alt="${nm} — ${p.n}"></div>
+  ${many?'<div class="nav"><button class="btn pbtn2" data-lb="prev">‹ Назад</button><button class="btn pbtn2" data-lb="next">Далее ›</button></div>':''}`;
+}
+{let x0=null;const lb=document.getElementById('lb');
+  lb.addEventListener('touchstart',e=>{x0=e.touches[0].clientX},{passive:true});
+  lb.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)stepLb(dx<0?1:-1)},{passive:true});}
 
 /* ============ PLAYER ============ */
 let P=null,AC=null;
@@ -1444,12 +1487,14 @@ function clubClick(t){
 /* ============ EVENTS ============ */
 document.addEventListener('click',e=>{
   const t=e.target;
+  if($('#lb').contains(t)){const b=t.closest('[data-lb]');if(b){const a=b.dataset.lb;if(a==='close')closeLb();else stepLb(a==='next'?1:-1)}return}
   if(O&&$('#onbHost').contains(t)){onbClick(t);return}
   if(P&&$('#player').contains(t)){const b=t.closest('[data-p]');if(b)playerAct(b.dataset.p);return}
   if(t===$('#backdrop')){closeSheet();resetZ();return}
   const d=k=>t.closest('[data-'+k+']');
   let el;
   if(el=d('quick')){const q=QUICK[el.dataset.quick];if(q.lock&&!unlocked(q.lock)){toast('Откройте в Клубе → Бонусы');S.club.seg='bonus';saveClub();return go('club')}}
+  if(el=d('ph')){const[id,i]=el.dataset.ph.split(':');return openLb(id,+i)}
   if(clubClick(t))return;
   if(el=d('tab'))return go(el.dataset.tab);
   if(el=d('tloc')){S.todayLoc=el.dataset.tloc;return render()}
@@ -1490,7 +1535,10 @@ document.addEventListener('change',e=>{
   if(k!=='name'){render();toast('Программа пересчитана')}
 });
 document.addEventListener('input',e=>{const el=e.target.closest('[data-pf="name"]');if(el){S.p.name=el.value;save();const a=document.querySelector('.hdr .avatar');if(a)a.textContent=(el.value||'Я')[0].toUpperCase()}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();resetZ()}});
+document.addEventListener('keydown',e=>{
+  if(LB.id){if(e.key==='Escape')closeLb();if(e.key==='ArrowRight')stepLb(1);if(e.key==='ArrowLeft')stepLb(-1);return}
+  if(e.key==='Escape'){closeSheet();resetZ()}
+});
 // Колесо мыши листает горизонтальные ленты; на краю ленты прокручивается страница
 document.addEventListener('wheel',e=>{
   if(e.ctrlKey||Math.abs(e.deltaX)>=Math.abs(e.deltaY))return;
